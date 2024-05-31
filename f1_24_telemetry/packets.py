@@ -324,6 +324,36 @@ class PacketSessionData(Packet):
         uint8 m_numSafetyCarPeriods; // Number of safety cars called during session
         uint8 m_numVirtualSafetyCarPeriods; // Number of virtual safety cars called
         uint8 m_numRedFlagPeriods; // Number of red flags called during session
+        # NEW IN F124
+        uint8    m_equalCarPerformance;              // 0 = Off, 1 = On
+        uint8    m_recoveryMode;              	// 0 = None, 1 = Flashbacks, 2 = Auto-recovery
+        uint8    m_flashbackLimit;            	// 0 = Low, 1 = Medium, 2 = High, 3 = Unlimited
+        uint8    m_surfaceType;               	// 0 = Simplified, 1 = Realistic
+        uint8    m_lowFuelMode;               	// 0 = Easy, 1 = Hard
+        uint8    m_raceStarts;			// 0 = Manual, 1 = Assisted
+        uint8    m_tyreTemperature;           	// 0 = Surface only, 1 = Surface & Carcass
+        uint8    m_pitLaneTyreSim;            	// 0 = On, 1 = Off
+        uint8    m_carDamage;                 	// 0 = Off, 1 = Reduced, 2 = Standard, 3 = Simulation
+        uint8    m_carDamageRate;                    // 0 = Reduced, 1 = Standard, 2 = Simulation
+        uint8    m_collisions;                       // 0 = Off, 1 = Player-to-Player Off, 2 = On
+        uint8    m_collisionsOffForFirstLapOnly;     // 0 = Disabled, 1 = Enabled
+        uint8    m_mpUnsafePitRelease;               // 0 = On, 1 = Off (Multiplayer)
+        uint8    m_mpOffForGriefing;                 // 0 = Disabled, 1 = Enabled (Multiplayer)
+        uint8    m_cornerCuttingStringency;          // 0 = Regular, 1 = Strict
+        uint8    m_parcFermeRules;                   // 0 = Off, 1 = On
+        uint8    m_pitStopExperience;                // 0 = Automatic, 1 = Broadcast, 2 = Immersive
+        uint8    m_safetyCar;                        // 0 = Off, 1 = Reduced, 2 = Standard, 3 = Increased
+        uint8    m_safetyCarExperience;              // 0 = Broadcast, 1 = Immersive
+        uint8    m_formationLap;                     // 0 = Off, 1 = On
+        uint8    m_formationLapExperience;           // 0 = Broadcast, 1 = Immersive
+        uint8    m_redFlags;                         // 0 = Off, 1 = Reduced, 2 = Standard, 3 = Increased
+        uint8    m_affectsLicenceLevelSolo;          // 0 = Off, 1 = On
+        uint8    m_affectsLicenceLevelMP;            // 0 = Off, 1 = On
+        uint8    m_numSessionsInWeekend;             // Number of session in following array
+        uint8    m_weekendStructure[12];            // List of session types to show weekend
+                                                    // structure - see appendix for types
+        float    m_sector2LapDistanceStart;          // Distance in m around track where sector 2 starts
+        float    m_sector3LapDistanceStart;          // Distance in m around track where sector 3 starts
     };
     """
 
@@ -387,6 +417,37 @@ class PacketSessionData(Packet):
         ("num_safety_car_periods", ctypes.c_uint8),  # Number of safety cars called during session
         ("num_virtual_safety_car_periods", ctypes.c_uint8),  # Number of virtual safety cars called
         ("num_red_flag_periods", ctypes.c_uint8),  # Number of red flags called during session
+        ("equal_car_performance", ctypes.c_uint8),  # 0 = off, 1 = on
+        ("recovery_mode", ctypes.c_uint8),  # 0 = None, 1 = Flashbacks, 2 = Auto-recovery
+        ("flashback_limit", ctypes.c_uint8), # 0 = Low, 1 = Medium, 2 = High, 3 = Unlimited
+        ("surface_type", ctypes.c_uint8),# 0 = Simplified, 1 = Realistic
+        ("low_fuel_mode", ctypes.c_uint8),# 0 = Easy, 1 = Hard
+        ("race_starts", ctypes.c_uint8),# 0 = Manual, 1 = Assisted
+        ("tyre_temperature", ctypes.c_uint8),# 0 = Surface only, 1 = Surface & Carcass
+        ("pit_lane_tyre_sim", ctypes.c_uint8),# 0 = On, 1 = Off
+        ("car_damage", ctypes.c_uint8),# 0 = Off, 1 = Reduced, 2 = Standard, 3 = Simulation
+        ("car_damage_rate", ctypes.c_uint8),# 0 = Reduced, 1 = Standard, 2 = Simulation
+        ("collisions", ctypes.c_uint8),# 0 = Off, 1 = Player-to-Player Off, 2 = On
+        ("collisions_off_for_first_lap_only", ctypes.c_uint8),# 0 = Disabled, 1 = Enabled
+        ("mp_unsafe_pit_release", ctypes.c_uint8),# 0 = On, 1 = Off (Multiplayer)
+        ("mp_off_for_griefing", ctypes.c_uint8),# 0 = Disabled, 1 = Enabled (Multiplayer)
+        ("corner_cutting_stringency", ctypes.c_uint8),# 0 = Regular, 1 = Strict
+        ("parc_ferme_rules", ctypes.c_uint8),# 0 = Off, 1 = On
+        ("pit_stop_experience", ctypes.c_uint8),# 0 = Automatic, 1 = Broadcast, 2 = Immersive
+        ("safety_car", ctypes.c_uint8),# 0 = Off, 1 = Reduced, 2 = Standard, 3 = Increased
+        ("safety_car_experience", ctypes.c_uint8),# 0 = Broadcast, 1 = Immersive
+        ("formation_lap", ctypes.c_uint8),# 0 = Off, 1 = On
+        ("formation_lap_experience", ctypes.c_uint8),# 0 = Broadcast, 1 = Immersive
+        ("red_flags", ctypes.c_uint8),# 0 = Off, 1 = Reduced, 2 = Standard, 3 = Increased
+        ("affects_licence_level_solo", ctypes.c_uint8),# 0 = Off, 1 = On
+        ("affects_licence_level_mp", ctypes.c_uint8),# 0 = Off, 1 = On
+        ("num_sessions_in_weekend", ctypes.c_uint8),# Number of session in following array
+        ("weekend_structure", ctypes.c_uint8 * 12),# List of session types to show weekend structure
+                                                    # 0 = unknown, 1 = P1, 2 = P2, 3 = P3, 4 = Short P
+                                                    # 5 = Q1, 6 = Q2, 7 = Q3, 8 = Short Q, 9 = OSQ
+                                                    # 10 = R, 11 = R2, 12 = R3, 13 = Time Trial
+        ("sector2_lap_distance_start", ctypes.c_float),# Distance in m around track where sector 2 starts
+        ("sector3_lap_distance_start", ctypes.c_float),# Distance in m around track where sector 3 starts
     ]
 
 
@@ -400,12 +461,14 @@ class LapData(Packet):
     {
         uint32 m_lastLapTimeInMS; // Last lap time in milliseconds
         uint32 m_currentLapTimeInMS; // Current time around the lap in milliseconds
-        uint16 m_sector1TimeInMS; // Sector 1 time in milliseconds
-        uint8 m_sector1TimeMinutes; // Sector 1 whole minute part
-        uint16 m_sector2TimeInMS; // Sector 2 time in milliseconds
-        uint8 m_sector2TimeMinutes; // Sector 2 whole minute part
-        uint16 m_deltaToCarInFrontInMS; // Time delta to car in front in milliseconds
-        uint16 m_deltaToRaceLeaderInMS; // Time delta to race leader in milliseconds
+        uint16 m_sector1TimeMSPart;         // Sector 1 time milliseconds part
+        uint8 m_ssector1TimeMinutesPart; // Sector 1 whole minute part
+        uint16 m_sector2TimeMSPart; // Sector 2 time milliseconds part
+        uint8 m_sector2TimeMinutesPart; // Sector 2 whole minute part
+        uint16 m_deltaToCarInFrontMSPart;   // Time delta to car in front milliseconds part
+        uint8  m_deltaToCarInFrontMinutesPart; // Time delta to car in front whole minute part
+        uint16 m_deltaToRaceLeaderMSPart;      // Time delta to race leader milliseconds part
+        uint8  m_deltaToRaceLeaderMinutesPart; // Time delta to race leader whole minute part
         float m_lapDistance; // Distance vehicle is around current lap in metres – could
         // be negative if line hasn’t been crossed yet
         float m_totalDistance; // Total distance travelled in session in metres – could
@@ -432,6 +495,8 @@ class LapData(Packet):
         uint16 m_pitLaneTimeInLaneInMS; // If active, the current time spent in the pit lane in ms
         uint16 m_pitStopTimerInMS; // Time of the actual pit stop in ms
         uint8 m_pitStopShouldServePen; // Whether the car should serve a penalty at this stop
+        float    m_speedTrapFastestSpeed;     // Fastest speed through speed trap for this car in kmph
+        uint8    m_speedTrapFastestLap;       // Lap no the fastest speed was achieved, 255 = not set
     };
     """
 
@@ -442,8 +507,10 @@ class LapData(Packet):
         ("sector_1_time_minutes", ctypes.c_uint8),  # Sector 1 whole minute part
         ("sector_2_time_in_ms", ctypes.c_uint16),  # Sector 2 time in milliseconds
         ("sector_2_time_minutes", ctypes.c_uint8),  # Sector 2 whole minute part
-        ("delta_to_car_in_front_in_ms", ctypes.c_uint16),  # Time delta to car in front, in milliseconds
-        ("delta_to_race_leader_in_ms", ctypes.c_uint16),  # Time delta to race leader in milliseconds
+        ("delta_to_car_in_front_in_ms", ctypes.c_uint16),  # Time delta to car in front milliseconds part
+        ("delta_to_car_in_front_minutes", ctypes.c_uint8),  # Time delta to car in front whole minute part
+        ("delta_to_race_leader_in_ms", ctypes.c_uint16),  # Time delta to race leader milliseconds part
+        ("delta_to_race_leader_minutes", ctypes.c_uint8),  # Time delta to race leader whole minute part
         ("lap_distance", ctypes.c_float),  # Distance vehicle is around current lap in metres – could
         # be negative if line hasn’t been crossed yet
         ("total_distance", ctypes.c_float),  # Total distance travelled in session in metres – could
@@ -472,6 +539,8 @@ class LapData(Packet):
         ("pit_lane_time_in_lane_in_ms", ctypes.c_uint16),  # If active, the current time spent in the pit lane in ms
         ("pit_stop_timer_in_ms", ctypes.c_uint16),  # Time of the actual pit stop in ms
         ("pit_stop_should_serve_pen", ctypes.c_uint8),  # Whether the car should serve a penalty at this stop
+        ("speed_trap_fastest_speed", ctypes.c_float),  # Fastest speed through speed trap for this car in kmph
+        ("speed_trap_fastest_lap", ctypes.c_uint8),  # Lap no the fastest speed was achieved, 255 = not set
     ]
 
 
@@ -588,6 +657,21 @@ class OverTake(Packet):
     ]
 
 
+class SafetyCar(Packet):
+    _fields_ = [
+        ("safety_car_type", ctypes.c_uint8), # 0 = No Safety Car, 1 = Full Safety Car
+                                             # 2 = Virtual Safety Car, 3 = Formation Lap Safety Car
+        ("event_type", ctypes.c_uint8),      # 0 = Deployed, 1 = Returning, 2 = Returned
+                                             # 3 = Resume Race
+    ]
+
+class Collision(Packet):
+    _fields_ = [
+        ("vehicle1_idx", ctypes.c_uint8),
+        ("vehicle2_idx", ctypes.c_uint8)
+    ]
+
+
 class EventDataDetails(ctypes.Union, PacketMixin):
     _fields_ = [
         ("fastest_lap", FastestLap),
@@ -602,6 +686,8 @@ class EventDataDetails(ctypes.Union, PacketMixin):
         ("flashback", Flashback),
         ("buttons", Buttons),
         ("overtake", OverTake),
+        ("safety_car", SafetyCar),
+        ("collision", Collision),
     ]
 
 
@@ -627,6 +713,8 @@ class PacketEventData(Packet):
     Button status        "BUTN" Button status changed
     Red Flag             "RDFL" Red flag shown
     Overtake             "OVTK" Overtake occurred
+    Safety Car           “SCAR” Safety car event – details in event
+    Collision            “COLL” Collision between two vehicles has occurred
     """
 
     _fields_ = [
@@ -651,6 +739,7 @@ class ParticipantData(Packet):
         // Will be truncated with ... (U+2026) if too long
         uint8 m_yourTelemetry; // The player's UDP setting, 0 = restricted, 1 = public
         uint8 m_showOnlineNames; // The player's show online names setting, 0 = off, 1 = on
+        uint16     m_techLevel;         // F1 World tech level
         uint8 m_platform; // 1 = Steam, 3 = PlayStation, 4 = Xbox, 6 = Origin, 255 = unknown
     };
     """
@@ -667,6 +756,7 @@ class ParticipantData(Packet):
         # Will be truncated with … (U+2026) if too long
         ("your_telemetry", ctypes.c_uint8),  # The player's UDP setting, 0 = restricted, 1 = public
         ("show_online_names", ctypes.c_uint8),  # The player's show online names setting, 0 = off, 1 = on
+        ("f1world_tech_level", ctypes.c_uint16),  # F1 World tech level
         ("platform", ctypes.c_uint8),  # 1 = Steam, 3 = PlayStation, 4 = Xbox, 6 = Origin, 255 = unknown
     ]
 
@@ -708,6 +798,7 @@ class CarSetupData(Packet):
         uint8 m_rearSuspensionHeight; // Rear ride height
         uint8 m_brakePressure; // Brake pressure (percentage)
         uint8 m_brakeBias; // Brake bias (percentage)
+        uint8 m_engineBraking; // Engine braking (percentage)
         float m_rearLeftTyrePressure; // Rear left tyre pressure (PSI)
         float m_rearRightTyrePressure; // Rear right tyre pressure (PSI)
         float m_frontLeftTyrePressure; // Front left tyre pressure (PSI)
@@ -734,6 +825,7 @@ class CarSetupData(Packet):
         ("rear_suspension_height", ctypes.c_uint8),  # Rear ride height
         ("brake_pressure", ctypes.c_uint8),  # Brake pressure (percentage)
         ("brake_bias", ctypes.c_uint8),  # Brake bias (percentage)
+        ("engine_braking", ctypes.c_uint8),  # Engine braking (percentage)
         ("rear_left_tyre_pressure", ctypes.c_float),  # Rear left tyre pressure (PSI)
         ("rear_right_tyre_pressure", ctypes.c_float),  # Rear right tyre pressure (PSI)
         ("front_left_tyre_pressure", ctypes.c_float),  # Front left tyre pressure (PSI)
@@ -755,6 +847,7 @@ class PacketCarSetupData(Packet):
     _fields_ = [
         ("header", PacketHeader),  # Header
         ("car_setups", CarSetupData * 22),
+        ('next_front_wing_value', float) # Value of front wing after next pit stop - player only
     ]
 
 
@@ -951,6 +1044,9 @@ class LobbyInfoData(Packet):
         ("name", ctypes.c_char * 48),  # Name of participant in UTF-8 format – null terminated
         # Will be truncated with ... (U+2026) if too long
         ("car_number", ctypes.c_uint8),  # Car number of the player
+        ("your_telemetry", ctypes.c_uint8),  # The player's UDP setting, 0 = restricted, 1 = public
+        ("show_online_names", ctypes.c_uint8),  # The player's show online names setting, 0 = off, 1 = on
+        ("f1world_tech_level", ctypes.c_uint16),  # The player's F1 World tech level
         ("ready_status", ctypes.c_uint8),  # 0 = not ready, 1 = ready, 2 = spectating
     ]
 
@@ -1042,15 +1138,15 @@ class LapHistoryData(Packet):
     Version: 1
     struct LapHistoryData
     {
-        uint32 m_lapTimeInMS; // Lap time in milliseconds
-        uint16 m_sector1TimeInMS; // Sector 1 time in milliseconds
-        uint8 m_sector1TimeMinutes; // Sector 1 whole minute part
-        uint16 m_sector2TimeInMS; // Sector 2 time in milliseconds
-        uint8 m_sector1TimeMinutes; // Sector 2 whole minute part
-        uint16 m_sector3TimeInMS; // Sector 3 time in milliseconds
-        uint8 m_sector3TimeMinutes; // Sector 3 whole minute part
-        uint8 m_lapValidBitFlags; // 0x01 bit set-lap valid, 0x02 bit set-sector 1 valid
-        // 0x04 bit set-sector 2 valid, 0x08 bit set-sector 3 valid
+        uint32    m_lapTimeInMS;              // Lap time in milliseconds
+        uint16    m_sector1TimeMSPart;        // Sector 1 milliseconds part
+        uint8     m_sector1TimeMinutesPart;   // Sector 1 whole minute part
+        uint16    m_sector2TimeMSPart;        // Sector 2 time milliseconds part
+        uint8     m_sector2TimeMinutesPart;   // Sector 2 whole minute part
+        uint16    m_sector3TimeMSPart;        // Sector 3 time milliseconds part
+        uint8     m_sector3TimeMinutesPart;   // Sector 3 whole minute part
+        uint8      m_lapValidBitFlags;        // 0x01 bit set-lap valid, 0x02 bit set-sector 1 valid
+                                              // 0x04 bit set-sector 2 valid, 0x08 bit set-sector 3 valid
     };
     """
 
@@ -1167,6 +1263,14 @@ class PacketMotionExData(Packet):
         float m_angularAccelerationZ; // Angular acceleration z-component
         float m_frontWheelsAngle; // Current front wheels angle in radians
         float m_wheelVertForce[4]; // Vertical forces for each wheel
+
+        # NEW IN F1 24
+        float  m_frontAeroHeight; // Front plank edge height above road surface
+        float  m_rearAeroHeight;  // Rear plank edge height above road surface
+        float  m_frontRollAngle;  // Roll angle of the front suspension
+        float  m_rearRollAngle;   // Roll angle of the rear suspension
+        float  m_chassisYaw;      // Yaw angle of the chassis relative to the direction
+                                  // of motion - radians
     };
     """
 
@@ -1192,22 +1296,83 @@ class PacketMotionExData(Packet):
         ("m_angularAccelerationZ", ctypes.c_float),  # Angular acceleration z-component
         ("m_frontWheelsAngle", ctypes.c_float),  # Current front wheels angle in radians
         ("m_wheelVertForce", ctypes.c_float),  # Vertical forces for each wheel
+        ("front_aero_height", ctypes.c_float), # Front plank edge height above road surface
+        ("rear_aero_height", ctypes.c_float),  # Rear plank edge height above road surface
+        ("front_roll_angle", ctypes.c_float),  # Roll angle of the front suspension
+        ("rear_roll_angle", ctypes.c_float),   # Roll angle of the rear suspension
+        ("chassis_yaw", ctypes.c_float),       # Yaw angle of the chassis relative to the direction
+    ]
+
+class TimeTrialDataSet(Packet):
+    """
+    The time trial data gives extra information only relevant to time trial game mode. This packet will not be sent in other game modes. 
+    Frequency: 1 per second
+    Size: 101 bytes
+    Version: 1
+    struct TimeTrialDataSet
+    {
+        uint8   m_carIdx;              // Index of the car this data relates to
+        uint8   m_teamId;              // Team id - see appendix
+        uint32  m_lapTimeInMS;         // Lap time in milliseconds
+        uint32  m_sector1TimeInMS;     // Sector 1 time in milliseconds
+        uint32  m_sector2TimeInMS;     // Sector 2 time in milliseconds
+        uint32  m_sector3TimeInMS;     // Sector 3 time in milliseconds
+        uint8   m_tractionControl;     // 0 = off, 1 = medium, 2 = full
+        uint8   m_gearboxAssist;       // 1 = manual, 2 = manual & suggested gear, 3 = auto
+        uint8   m_antiLockBrakes;      // 0 (off) - 1 (on)
+        uint8   m_equalCarPerformance; // 0 = Realistic, 1 = Equal
+        uint8   m_customSetup;         // 0 = No, 1 = Yes
+        uint8   m_valid;               // 0 = invalid, 1 = valid
+    };
+    """
+    _fields = [
+        ('car_idx', ctypes.c_uint8),               # Index of the car this data relates to
+        ('team_id', ctypes.c_uint8),               # Team id - see appendix
+        ('lap_time_in_ms', ctypes.c_uint32),       # Lap time in milliseconds
+        ('sector1_time_in_ms', ctypes.c_uint32),   # Sector 1 time in milliseconds
+        ('sector2_time_in_ms', ctypes.c_uint32),   # Sector 2 time in milliseconds
+        ('sector3_time_in_ms', ctypes.c_uint32),   # Sector 3 time in milliseconds
+        ('traction_control', ctypes.c_uint8),      # 0 = off, 1 = medium, 2 = full
+        ('gearbox_assist', ctypes.c_uint8),        # 1 = manual, 2 = manual & suggested gear, 3 = auto
+        ('anti_lock_brakes', ctypes.c_uint8),      # 0 (off) - 1 (on)
+        ('equal_car_performance', ctypes.c_uint8), # 0 = Realistic, 1 = Equal
+        ('custom_setup', ctypes.c_uint8),          # 0 = No, 1 = Yes
+        ('valid', ctypes.c_uint8),                 # 0 = invalid, 1 = valid
+    ]
+
+class PacketTimeTrialData(Packet):
+    """
+    struct PacketTimeTrialData
+    {
+        PacketHeader        m_header;                    // Header
+
+        TimeTrialDataSet    m_playerSessionBestDataSet;  // Player session best data set
+        TimeTrialDataSet    m_personalBestDataSet;       // Personal best data set
+        TimeTrialDataSet    m_rivalDataSet;              // Rival data set
+    };
+    """
+    _fields = [
+        ("header", PacketHeader),  # Header
+        ('player_session_best_data_set', TimeTrialDataSet), # Player session best data set
+        ('personal_best_data_set', TimeTrialDataSet),       # Personal best data set
+        ('rival_data_set', TimeTrialDataSet),               # Rival data set
     ]
 
 
 HEADER_FIELD_TO_PACKET_TYPE = {
-    (2023, 1, 0): PacketMotionData,
-    (2023, 1, 1): PacketSessionData,
-    (2023, 1, 2): PacketLapData,
-    (2023, 1, 3): PacketEventData,
-    (2023, 1, 4): PacketParticipantsData,
-    (2023, 1, 5): PacketCarSetupData,
-    (2023, 1, 6): PacketCarTelemetryData,
-    (2023, 1, 7): PacketCarStatusData,
-    (2023, 1, 8): PacketFinalClassificationData,
-    (2023, 1, 9): PacketLobbyInfoData,
-    (2023, 1, 10): PacketCarDamageData,
-    (2023, 1, 11): PacketSessionHistoryData,
-    (2023, 1, 12): PacketTyreSetsData,
-    (2023, 1, 13): PacketMotionExData,
+    (2024, 1, 0): PacketMotionData,
+    (2024, 1, 1): PacketSessionData,
+    (2024, 1, 2): PacketLapData,
+    (2024, 1, 3): PacketEventData,
+    (2024, 1, 4): PacketParticipantsData,
+    (2024, 1, 5): PacketCarSetupData,
+    (2024, 1, 6): PacketCarTelemetryData,
+    (2024, 1, 7): PacketCarStatusData,
+    (2024, 1, 8): PacketFinalClassificationData,
+    (2024, 1, 9): PacketLobbyInfoData,
+    (2024, 1, 10): PacketCarDamageData,
+    (2024, 1, 11): PacketSessionHistoryData,
+    (2024, 1, 12): PacketTyreSetsData,
+    (2024, 1, 13): PacketMotionExData,
+    (2024, 1, 14): PacketTimeTrialData,
 }
