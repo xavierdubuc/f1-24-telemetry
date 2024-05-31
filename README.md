@@ -7,8 +7,8 @@ Currently supporting the `v27.2` from the F1 24 UDP specification which is avail
 
 # Installing
 
-It's not working right now, I let the original author of this publish his own version (or take my small contribution)
-as part of the new version, I don't mind. If after "some time" he doesn't do it, then maybe it's a signal that he won't
+It's not working right now, I let the original author of this publish his own version (or take my small contribution
+as part of the new version, I don't mind). If after "some time" he doesn't do it, then maybe it's a signal that he won't
 and I may then consider the idea of publish it on PyPI.
 
 ```commandline
