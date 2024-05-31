@@ -1,22 +1,23 @@
-# F1 23 Telemetry Supporting v29x3
-Currently supporting the `v29x3: Update game mode IDs in the appendix` version from
-the F1 23 UDP specification which is available [here](https://answers.ea.com/t5/General-Discussion/F1-23-UDP-Specification/td-p/12632888)
+This project is a fork of excellent project [f1-23-telemetry](https://github.com/chrishannam/f1-23-telemetry) of Chris Hannam. My only contribution here is to implement the f1 24 changes.
+
+# F1 24 Telemetry Supporting v29x3
+Currently supporting the `v27.2` from the F1 24 UDP specification which is available [here](https://answers.ea.com/t5/General-Discussion/F1-24-UDP-Specification/td-p/13745220)
 
 # Installing
 
 ```commandline
-pip install f1-23-telemetry
+pip install f1-24-telemetry
 ```
 
 # Running
 ```commandline
-telemetry-f1-23-listener
+telemetry-f1-24-listener
 ```
 
 # Usage
 
 ```python
-from f1_23_telemetry.listener import TelemetryListener
+from f1_24_telemetry.listener import TelemetryListener
 
 listener = TelemetryListener(port=20777, host='localhost')
 packet = listener.get()
@@ -26,5 +27,5 @@ packet = listener.get()
 ```commandline
 pip install --upgrade build twine
 python -m build
-python3 -m twine upload f1-23-telemetry dist/
+python3 -m twine upload f1-24-telemetry dist/
 ```
