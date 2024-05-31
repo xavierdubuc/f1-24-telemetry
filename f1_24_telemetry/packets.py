@@ -847,7 +847,7 @@ class PacketCarSetupData(Packet):
     _fields_ = [
         ("header", PacketHeader),  # Header
         ("car_setups", CarSetupData * 22),
-        ('next_front_wing_value', float) # Value of front wing after next pit stop - player only
+        ('next_front_wing_value', ctypes.c_float) # Value of front wing after next pit stop - player only
     ]
 
 
