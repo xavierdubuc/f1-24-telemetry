@@ -1,6 +1,6 @@
 import json
 
-from f1_23_telemetry.listener import TelemetryListener
+from f1_24_telemetry.listener import TelemetryListener
 
 
 def _get_listener():
