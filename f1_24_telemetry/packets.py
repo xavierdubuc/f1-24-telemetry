@@ -612,7 +612,7 @@ class SpeedTrap(Packet):
         ("speed", ctypes.c_float),  # Top speed achieved in kilometres per hour
         ("overall_fastest_in_session", ctypes.c_uint8),  # Overall fastest speed in session = 1, otherwise 0
         ("is_driver_fastest_in_session", ctypes.c_uint8),  # Fastest speed for driver in session = 1, otherwise 0
-        ("fastest_vehicle_idx_in_sSession", ctypes.c_uint8),  # Vehicle index of the vehicle that is the fastest
+        ("fastest_vehicle_idx_in_session", ctypes.c_uint8),  # Vehicle index of the vehicle that is the fastest
         # in this session
         ("fastest_speed_in_session", ctypes.c_float),  # Speed of the vehicle that is the fastest in this session
     ]
