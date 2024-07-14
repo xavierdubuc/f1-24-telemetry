@@ -1325,7 +1325,7 @@ class TimeTrialDataSet(Packet):
         uint8   m_valid;               // 0 = invalid, 1 = valid
     };
     """
-    _fields = [
+    _fields_ = [
         ('car_idx', ctypes.c_uint8),               # Index of the car this data relates to
         ('team_id', ctypes.c_uint8),               # Team id - see appendix
         ('lap_time_in_ms', ctypes.c_uint32),       # Lap time in milliseconds
@@ -1351,7 +1351,7 @@ class PacketTimeTrialData(Packet):
         TimeTrialDataSet    m_rivalDataSet;              // Rival data set
     };
     """
-    _fields = [
+    _fields_ = [
         ("header", PacketHeader),  # Header
         ('player_session_best_data_set', TimeTrialDataSet), # Player session best data set
         ('personal_best_data_set', TimeTrialDataSet),       # Personal best data set
