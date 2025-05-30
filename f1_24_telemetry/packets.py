@@ -573,6 +573,16 @@ class FastestLap(Packet):
 class Retirement(Packet):
     _fields_ = [
         ("vehicle_idx", ctypes.c_uint8),  # Vehicle index of car retiring
+        ("reason", ctypes.c_uint8),       # Retirement reason 
+        # 0 = invalid, 1 = retired, 2 = finished, 3 = terminal damage, 4 = inactive,
+        # 5 = not enough laps completed, 6 = black flagged, 7 = red flagged
+        # 8 = mechanical failure, 9 = session skipped, 10 = session simulated
+    ]
+
+
+class DRSDisabled(Packet):
+    _fields_ = [
+        ("reason", ctypes.c_uint8),       # 0 = Wet track, 1 = Safety car deployed, 2 = Red flag, 3 = Min lap not reached
     ]
 
 
@@ -633,6 +643,7 @@ class DriveThroughPenaltyServed(Packet):
 class StopGoPenaltyServed(Packet):
     _fields_ = [
         ("vehicle_idx", ctypes.c_uint8),  # Vehicle index of the vehicle serving stop go
+        ("stop_time", ctypes.c_float),  # Time spent serving stop go in seconds
     ]
 
 
@@ -675,6 +686,7 @@ class Collision(Packet):
 class EventDataDetails(ctypes.Union, PacketMixin):
     _fields_ = [
         ("fastest_lap", FastestLap),
+        ("drs_disabled", DRSDisabled),
         ("retirement", Retirement),
         ("team_mate_in_pits", TeamMateInPits),
         ("race_winner", RaceWinner),
@@ -724,40 +736,57 @@ class PacketEventData(Packet):
     ]
 
 
+class Color(Packet):
+    """
+    struct LiveryColour
+    {
+        uint8       red;
+        uint8       green;
+        uint8       blue;
+    };
+    """
+    _fields = [
+        ("red", ctypes.c_uint8),
+        ("green", ctypes.c_uint8),
+        ("blue", ctypes.c_uint8),
+    ]
+
 class ParticipantData(Packet):
     """
     struct ParticipantData
     {
-        uint8 m_aiControlled; // Whether the vehicle is AI (1) or Human (0) controlled
-        uint8 m_driverId; // Driver id - see appendix, 255 if network human
-        uint8 m_networkId; // Network id – unique identifier for network players
-        uint8 m_teamId; // Team id - see appendix
-        uint8 m_myTeam; // My team flag – 1 = My Team, 0 = otherwise
-        uint8 m_raceNumber; // Race number of the car
-        uint8 m_nationality; // Nationality of the driver
-        char m_name[48]; // Name of participant in UTF-8 format – null terminated
-        // Will be truncated with ... (U+2026) if too long
-        uint8 m_yourTelemetry; // The player's UDP setting, 0 = restricted, 1 = public
-        uint8 m_showOnlineNames; // The player's show online names setting, 0 = off, 1 = on
-        uint16     m_techLevel;         // F1 World tech level
-        uint8 m_platform; // 1 = Steam, 3 = PlayStation, 4 = Xbox, 6 = Origin, 255 = unknown
+        uint8 m_aiControlled;            // Whether the vehicle is AI (1) or Human (0) controlled
+        uint8 m_driverId;                // Driver id - see appendix, 255 if network human
+        uint8 m_networkId;               // Network id – unique identifier for network players
+        uint8 m_teamId;                  // Team id - see appendix
+        uint8 m_myTeam;                  // My team flag – 1 = My Team, 0 = otherwise
+        uint8 m_raceNumber;              // Race number of the car
+        uint8 m_nationality;             // Nationality of the driver
+        char m_name[32];                 // Name of participant in UTF-8 format – null terminated
+                                         // Will be truncated with ... (U+2026) if too long
+        uint8 m_yourTelemetry;           // The player's UDP setting, 0 = restricted, 1 = public
+        uint8 m_showOnlineNames;         // The player's show online names setting, 0 = off, 1 = on
+        uint16 m_techLevel;              // F1 World tech level
+        uint8 m_platform;                // 1 = Steam, 3 = PlayStation, 4 = Xbox, 6 = Origin, 255 = unknown
+        LiveryColour m_liveryColours[4]; // Colours for the car
     };
     """
 
     _fields_ = [
-        ("ai_controlled", ctypes.c_uint8),  # Whether the vehicle is AI (1) or Human (0) controlled
-        ("driver_id", ctypes.c_uint8),  # Driver id - see appendix, 255 if network human
-        ("network_id", ctypes.c_uint8),  # Network id – unique identifier for network players
-        ("team_id", ctypes.c_uint8),  # Team id - see appendix
-        ("my_team", ctypes.c_uint8),  # My team flag – 1 = My Team, 0 = otherwise
-        ("race_number", ctypes.c_uint8),  # Race number of the car
-        ("nationality", ctypes.c_uint8),  # Nationality of the driver
-        ("name", ctypes.c_char * 48),  # Name of participant in UTF-8 format – null terminated
-        # Will be truncated with … (U+2026) if too long
-        ("your_telemetry", ctypes.c_uint8),  # The player's UDP setting, 0 = restricted, 1 = public
-        ("show_online_names", ctypes.c_uint8),  # The player's show online names setting, 0 = off, 1 = on
+        ("ai_controlled", ctypes.c_uint8),        # Whether the vehicle is AI (1) or Human (0) controlled
+        ("driver_id", ctypes.c_uint8),            # Driver id - see appendix, 255 if network human
+        ("network_id", ctypes.c_uint8),           # Network id – unique identifier for network players
+        ("team_id", ctypes.c_uint8),              # Team id - see appendix
+        ("my_team", ctypes.c_uint8),              # My team flag – 1 = My Team, 0 = otherwise
+        ("race_number", ctypes.c_uint8),          # Race number of the car
+        ("nationality", ctypes.c_uint8),          # Nationality of the driver
+        ("name", ctypes.c_char * 32),             # Name of participant in UTF-8 format – null terminated
+                                                  # Will be truncated with … (U+2026) if too long
+        ("your_telemetry", ctypes.c_uint8),       # The player's UDP setting, 0 = restricted, 1 = public
+        ("show_online_names", ctypes.c_uint8),    # The player's show online names setting, 0 = off, 1 = on
         ("f1world_tech_level", ctypes.c_uint16),  # F1 World tech level
-        ("platform", ctypes.c_uint8),  # 1 = Steam, 3 = PlayStation, 4 = Xbox, 6 = Origin, 255 = unknown
+        ("platform", ctypes.c_uint8),             # 1 = Steam, 3 = PlayStation, 4 = Xbox, 6 = Origin, 255 = unknown
+        ("livery_colours", Color * 4),            # Colours for the car
     ]
 
 
@@ -966,7 +995,7 @@ class CarStatusData(Packet):
         ("drs_activation_distance", ctypes.c_uint16),  # 0 = DRS not available, non-zero - DRS will be available
         # in [X] metres
         ("actual_tyre_compound", ctypes.c_uint8),  # F1 Modern - 16 = C5, 17 = C4, 18 = C3, 19 = C2, 20 = C1
-        # 21 = C0, 7 = inter, 8 = wet
+        # 21 = C0, 22 = C6, 7 = inter, 8 = wet
         # F1 Classic - 9 = dry, 10 = wet
         # F2 – 11 = super soft, 12 = soft, 13 = medium, 14 = hard
         # 15 = wet
@@ -1016,6 +1045,9 @@ class FinalClassificationData(Packet):
         ("result_status", ctypes.c_uint8),  # Result status - 0 = invalid, 1 = inactive, 2 = active
         # 3 = finished, 4 = didnotfinish, 5 = disqualified
         # 6 = not classified, 7 = retired
+        ("result_reason", ctypes.c_uint8), # Result reason - 0 = invalid, 1 = retired, 2 = finished
+        # 3 = terminal damage, 4 = inactive, 5 = not enough laps completed, 6 = black flagged, 7 = red flagged
+        # 8 = mechanical failure, 9 = session skipped, 10 = session simulated
         ("best_lap_time_in_ms", ctypes.c_uint32),  # Best lap time of the session in milliseconds
         ("total_race_time", ctypes.c_double),  # Total race time in seconds without penalties
         ("penalties_time", ctypes.c_uint8),  # Total penalties accumulated in seconds
@@ -1041,7 +1073,7 @@ class LobbyInfoData(Packet):
         ("team_id", ctypes.c_uint8),  # Team id - see appendix (255 if no team currently selected)
         ("nationality", ctypes.c_uint8),  # Nationality of the driver
         ("platform", ctypes.c_uint8),  # 1 = Steam, 3 = PlayStation, 4 = Xbox, 6 = Origin, 255 = unknown
-        ("name", ctypes.c_char * 48),  # Name of participant in UTF-8 format – null terminated
+        ("name", ctypes.c_char * 32),  # Name of participant in UTF-8 format – null terminated
         # Will be truncated with ... (U+2026) if too long
         ("car_number", ctypes.c_uint8),  # Car number of the player
         ("your_telemetry", ctypes.c_uint8),  # The player's UDP setting, 0 = restricted, 1 = public
@@ -1072,6 +1104,7 @@ class CarDamageData(Packet):
         float m_tyresWear[4]; // Tyre wear (percentage)
         uint8 m_tyresDamage[4]; // Tyre damage (percentage)
         uint8 m_brakesDamage[4]; // Brakes damage (percentage)
+        uint8 m_tyreBlisters[4]; // Tyre blisters value (percentage)
         uint8 m_frontLeftWingDamage; // Front left wing damage (percentage)
         uint8 m_frontRightWingDamage; // Front right wing damage (percentage)
         uint8 m_rearWingDamage; // Rear wing damage (percentage)
@@ -1097,6 +1130,7 @@ class CarDamageData(Packet):
         ("tyres_wear", ctypes.c_float * 4),  # Tyre wear (percentage)
         ("tyres_damage", ctypes.c_uint8 * 4),  # Tyre damage (percentage)
         ("brakes_damage", ctypes.c_uint8 * 4),  # Brakes damage (percentage)
+        ("tyres_blisters", ctypes.c_uint8 * 4),  # Tyre blisters value (percentage)
         ("front_left_wing_damage", ctypes.c_uint8),  # Front left wing damage (percentage)
         ("front_right_wing_damage", ctypes.c_uint8),  # Front right wing damage (percentage)
         ("rear_wing_damage", ctypes.c_uint8),  # Rear wing damage (percentage)
@@ -1271,36 +1305,44 @@ class PacketMotionExData(Packet):
         float  m_rearRollAngle;   // Roll angle of the rear suspension
         float  m_chassisYaw;      // Yaw angle of the chassis relative to the direction
                                   // of motion - radians
+
+        # NEW IN F1 25
+        float m_chassisPitch; // Pitch angle of the chassis relative to the direction of motion - radians
+        float m_wheelCamber[4]; // Camber of each wheel in radians
+        float m_wheelCamberGain[4]; // Camber gain for each wheel in radians, difference between active camber and dynamic camber
     };
     """
 
     _fields_ = [
         ("header", PacketHeader),  # Header
-        ("m_suspensionPosition", ctypes.c_float * 4),  # Note: All wheel arrays have the following order:
-        ("m_suspensionVelocity", ctypes.c_float * 4),  # RL, RR, FL, FR
+        ("m_suspensionPosition", ctypes.c_float * 4),      # Note: All wheel arrays have the following order:
+        ("m_suspensionVelocity", ctypes.c_float * 4),      # RL, RR, FL, FR
         ("m_suspensionAcceleration", ctypes.c_float * 4),  # RL, RR, FL, FR
-        ("m_wheelSpeed", ctypes.c_float * 4),  # Speed of each wheel
-        ("m_wheelSlipRatio", ctypes.c_float * 4),  # Slip ratio for each wheel
-        ("m_wheelSlipAngle", ctypes.c_float * 4),  # Slip angles for each wheel
-        ("m_wheelLatForce", ctypes.c_float * 4),  # Lateral forces for each wheel
-        ("m_wheelLongForce", ctypes.c_float * 4),  # Longitudinal forces for each wheel
-        ("m_heightOfCOGAboveGround", ctypes.c_float),  # Height of centre of gravity above ground
-        ("m_localVelocityX", ctypes.c_float),  # Velocity in local space – metres/s
-        ("m_localVelocityY", ctypes.c_float),  # Velocity in local space
-        ("m_localVelocityZ", ctypes.c_float),  # Velocity in local space
-        ("m_angularVelocityX", ctypes.c_float),  # Angular velocity x-component – radians/s
-        ("m_angularVelocityY", ctypes.c_float),  # Angular velocity y-component
-        ("m_angularVelocityZ", ctypes.c_float),  # Angular velocity z-component
-        ("m_angularAccelerationX", ctypes.c_float),  # Angular acceleration x-component – radians/s/s
-        ("m_angularAccelerationY", ctypes.c_float),  # Angular acceleration y-component
-        ("m_angularAccelerationZ", ctypes.c_float),  # Angular acceleration z-component
-        ("m_frontWheelsAngle", ctypes.c_float),  # Current front wheels angle in radians
-        ("m_wheelVertForce", ctypes.c_float),  # Vertical forces for each wheel
-        ("front_aero_height", ctypes.c_float), # Front plank edge height above road surface
-        ("rear_aero_height", ctypes.c_float),  # Rear plank edge height above road surface
-        ("front_roll_angle", ctypes.c_float),  # Roll angle of the front suspension
-        ("rear_roll_angle", ctypes.c_float),   # Roll angle of the rear suspension
-        ("chassis_yaw", ctypes.c_float),       # Yaw angle of the chassis relative to the direction
+        ("m_wheelSpeed", ctypes.c_float * 4),              # Speed of each wheel
+        ("m_wheelSlipRatio", ctypes.c_float * 4),          # Slip ratio for each wheel
+        ("m_wheelSlipAngle", ctypes.c_float * 4),          # Slip angles for each wheel
+        ("m_wheelLatForce", ctypes.c_float * 4),           # Lateral forces for each wheel
+        ("m_wheelLongForce", ctypes.c_float * 4),          # Longitudinal forces for each wheel
+        ("m_heightOfCOGAboveGround", ctypes.c_float),      # Height of centre of gravity above ground
+        ("m_localVelocityX", ctypes.c_float),              # Velocity in local space – metres/s
+        ("m_localVelocityY", ctypes.c_float),              # Velocity in local space
+        ("m_localVelocityZ", ctypes.c_float),              # Velocity in local space
+        ("m_angularVelocityX", ctypes.c_float),            # Angular velocity x-component – radians/s
+        ("m_angularVelocityY", ctypes.c_float),            # Angular velocity y-component
+        ("m_angularVelocityZ", ctypes.c_float),            # Angular velocity z-component
+        ("m_angularAccelerationX", ctypes.c_float),        # Angular acceleration x-component – radians/s/s
+        ("m_angularAccelerationY", ctypes.c_float),        # Angular acceleration y-component
+        ("m_angularAccelerationZ", ctypes.c_float),        # Angular acceleration z-component
+        ("m_frontWheelsAngle", ctypes.c_float),            # Current front wheels angle in radians
+        ("m_wheelVertForce", ctypes.c_float),              # Vertical forces for each wheel
+        ("front_aero_height", ctypes.c_float),             # Front plank edge height above road surface
+        ("rear_aero_height", ctypes.c_float),              # Rear plank edge height above road surface
+        ("front_roll_angle", ctypes.c_float),              # Roll angle of the front suspension
+        ("rear_roll_angle", ctypes.c_float),               # Roll angle of the rear suspension
+        ("chassis_yaw", ctypes.c_float),                   # Yaw angle of the chassis relative to the direction
+        ("chassis_pitch", ctypes.c_float),                 # Pitch angle of the chassis relative to the direction of motion - radians
+        ("wheel_camber", ctypes.c_float),                  # Camber of each wheel in radians
+        ("wheel_camber_gain", ctypes.c_float),             # Camber gain for each wheel in radians, difference between active camber and dynamic camber
     ]
 
 class TimeTrialDataSet(Packet):
@@ -1359,20 +1401,46 @@ class PacketTimeTrialData(Packet):
     ]
 
 
+cs_maxNumLapsInLapPositionsHistoryPacket = 50
+cs_maxNumCarsInUDPData = 22
+class PacketLapPositionsData(Packet):
+    """
+    struct PacketLapPositionsData
+    {
+        PacketHeader    m_header;                   // Header
+
+        // Packet specific data
+        uint8           m_numLaps;                  // Number of laps in the data
+        uint8           m_lapStart;                 // Index of the lap where the data starts, 0 indexed
+
+        // Array holding the position of the car in a given lap, 0 if no record
+        uint8           m_positionForVehicleIdx[cs_maxNumLapsInLapPositionsHistoryPacket][cs_maxNumCarsInUDPData];
+    };
+    """
+    _fields = [
+        ("header", PacketHeader),        # Header
+        ('num_laps', ctypes.c_uint8),    # Number of laps in data
+        ('lap_start', ctypes.c_uint8),   # Index of the lap where the data starts, 0 indexed
+        # Array holding the position of the car in a given lap, 0 if no record
+        ('positions_by_lap', ctypes.c_uint8 * cs_maxNumLapsInLapPositionsHistoryPacket * cs_maxNumCarsInUDPData)
+
+    ]
+
 HEADER_FIELD_TO_PACKET_TYPE = {
-    (2024, 1, 0): PacketMotionData,
-    (2024, 1, 1): PacketSessionData,
-    (2024, 1, 2): PacketLapData,
-    (2024, 1, 3): PacketEventData,
-    (2024, 1, 4): PacketParticipantsData,
-    (2024, 1, 5): PacketCarSetupData,
-    (2024, 1, 6): PacketCarTelemetryData,
-    (2024, 1, 7): PacketCarStatusData,
-    (2024, 1, 8): PacketFinalClassificationData,
-    (2024, 1, 9): PacketLobbyInfoData,
-    (2024, 1, 10): PacketCarDamageData,
-    (2024, 1, 11): PacketSessionHistoryData,
-    (2024, 1, 12): PacketTyreSetsData,
-    (2024, 1, 13): PacketMotionExData,
-    (2024, 1, 14): PacketTimeTrialData,
+    (2025, 1, 0): PacketMotionData,
+    (2025, 1, 1): PacketSessionData,
+    (2025, 1, 2): PacketLapData,
+    (2025, 1, 3): PacketEventData,
+    (2025, 1, 4): PacketParticipantsData,
+    (2025, 1, 5): PacketCarSetupData,
+    (2025, 1, 6): PacketCarTelemetryData,
+    (2025, 1, 7): PacketCarStatusData,
+    (2025, 1, 8): PacketFinalClassificationData,
+    (2025, 1, 9): PacketLobbyInfoData,
+    (2025, 1, 10): PacketCarDamageData,
+    (2025, 1, 11): PacketSessionHistoryData,
+    (2025, 1, 12): PacketTyreSetsData,
+    (2025, 1, 13): PacketMotionExData,
+    (2025, 1, 14): PacketTimeTrialData,
+    (2025, 1, 15): PacketLapPositionsData,
 }
