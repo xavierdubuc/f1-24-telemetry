@@ -786,6 +786,7 @@ class ParticipantData(Packet):
         ("show_online_names", ctypes.c_uint8),    # The player's show online names setting, 0 = off, 1 = on
         ("f1world_tech_level", ctypes.c_uint16),  # F1 World tech level
         ("platform", ctypes.c_uint8),             # 1 = Steam, 3 = PlayStation, 4 = Xbox, 6 = Origin, 255 = unknown
+        ("num_colours", ctypes.c_uint8),          # Number of colours valid for this car
         ("livery_colours", Color * 4),            # Colours for the car
     ]
 
