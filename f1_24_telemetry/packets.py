@@ -745,7 +745,7 @@ class Color(Packet):
         uint8       blue;
     };
     """
-    _fields = [
+    _fields_ = [
         ("red", ctypes.c_uint8),
         ("green", ctypes.c_uint8),
         ("blue", ctypes.c_uint8),
