@@ -41,7 +41,7 @@ skip-string-normalization = true
 
 [tool.poetry]
 name = "f1-24-telemetry"
-version = "0.1.4"
+version = "0.2.0"
 description = ""
 authors = ["Chris Hannam <ch@chrishannam.co.uk>", "Xavier Dubuc <contact@xavierdubuc.com>"]
 license = "MIT"
@@ -59,3 +59,6 @@ pytest-sugar = "^0.9.7"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

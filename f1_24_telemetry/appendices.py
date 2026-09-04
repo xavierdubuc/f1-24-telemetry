@@ -3,9 +3,6 @@ More info is available here:
 https://answers.ea.com/t5/General-Discussion/F1-24-UDP-Specification/td-p/13745220?attachment-id=822217
 """
 
-from tkinter import N
-
-
 TEAM_IDS = {
     0: 'Mercedes',
     1: 'Ferrari',
@@ -44,6 +41,28 @@ TEAM_IDS = {
     192: 'Haas ‘24',
     193: 'McLaren ‘24',
     194: 'Sauber ‘24',
+    465: 'Art GP ‘25',
+    466: 'Campos ‘25',
+    467: 'Rodin Motorsport ‘25',
+    468: 'AIX Racing ‘25',
+    469: 'DAMS ‘25',
+    470: 'Hitech ‘25',
+    471: 'MP Motorsport ‘25',
+    472: 'Prema ‘25',
+    473: 'Trident ‘25',
+    474: 'Van Amersfoort Racing ‘25',
+    475: 'Invicta ‘25',
+    476: 'Mercedes ‘26',
+    477: 'Ferrari ‘26',
+    478: 'Red Bull Racing ‘26',
+    479: 'Williams ‘26',
+    480: 'Aston Martin ‘26',
+    481: 'Alpine ‘26',
+    482: 'RB ‘26',
+    483: 'Haas ‘26',
+    484: 'McLaren ‘26',
+    485: 'Audi ‘26',
+    486: 'Cadillac ‘26',
 }
 
 DRIVER_IDS = {
@@ -53,7 +72,7 @@ DRIVER_IDS = {
     4: 'Felipe Massa',
     7: 'Lewis Hamilton',
     9: 'Max Verstappen',
-    10: 'Nico Hulkenberg',
+    10: 'Nico Hülkenberg',
     11: 'Kevin Magnussen',
     14: 'Sergio Perez',
     15: 'Valtteri Bottas',
@@ -134,6 +153,18 @@ DRIVER_IDS = {
     174: 'Nikola Tsolov',
     175: 'Tim Tramnitz',
     185: 'Luca Cortez',
+    186: 'Luke Browning',
+    187: 'Cian Shields',
+    188: 'Arvid Lindblad',
+    189: 'Dino Beganovic',
+    190: 'Leonardo Fornaroli',
+    191: 'Oliver Goethe',
+    192: 'Gabriele Minì',
+    193: 'Sebastián Montoya',
+    194: 'Alexander Dunne',
+    195: 'Max Esterson',
+    196: 'Sami Meguetounif',
+    197: 'John Bennett',
 }
 
 TRACK_IDS = {
@@ -164,6 +195,7 @@ TRACK_IDS = {
     39: 'Silverstone (reverse)',
     40: 'Austria (reverse)',
     41: 'Zandvoort (reverse)',
+    42: 'Madrid',
 }
 
 NATIONALITY_IDS = {
@@ -471,6 +503,9 @@ FORMULA = {
     5: 'Supercars',
     6: 'Esports',
     7: 'F2 2021',
+    8: 'F1 World',
+    9: 'F1 Elimination',
+    13: 'F1 26',
 }
 
 SAFETY_CAR_STATUS = {0: 'No safety car', 1: 'Full', 2: 'Virtual', 3: 'Formation lap'}
@@ -481,7 +516,7 @@ ERS_DEPLOYMENT_MODE = {
     0: 'None',
     1: 'Medium',
     2: 'Hot lap',
-    3: 'Overtake',
+    3: 'Boost',
 }
 
 RESULT_STATUS = {

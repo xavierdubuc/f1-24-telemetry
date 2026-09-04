@@ -17,6 +17,10 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
+# F1 25 : 2026 Season Pack raises the maximum number of cars per packet from 22 to 24
+# (new team for the 2026 season). All per-car arrays below use this constant.
+MAX_CARS = 24
+
 
 def to_json(*args, **kwargs):
     kwargs.setdefault("indent", 2)
@@ -112,7 +116,7 @@ class PacketHeader(Packet):
     """
     struct PacketHeader
     {
-        uint16 m_packetFormat; // 2023
+        uint16 m_packetFormat; // 2026
         uint8 m_gameYear; // Game year - last two digits e.g. 23
         uint8 m_gameMajorVersion; // Game major version - "X.00"
         uint8 m_gameMinorVersion; // Game minor version - "1.XX"
@@ -130,7 +134,7 @@ class PacketHeader(Packet):
     """
 
     _fields_ = [
-        ("packet_format", ctypes.c_int16),  # 2023
+        ("packet_format", ctypes.c_uint16),  # 2026 (spec: uint16)
         ("game_year", ctypes.c_uint8),  # Game year - last two digits e.g. 23
         ("game_major_version", ctypes.c_uint8),  # Game major version - "X.00"
         ("game_minor_version", ctypes.c_uint8),  # Game minor version - "1.XX"
@@ -163,9 +167,9 @@ class CarMotionData(Packet):
         int16 m_worldRightDirX; // World space right X direction (normalised)
         int16 m_worldRightDirY; // World space right Y direction (normalised)
         int16 m_worldRightDirZ; // World space right Z direction (normalised)
-        float m_gForceLateral; // Lateral G-Force component
-        float m_gForceLongitudinal; // Longitudinal G-Force component
-        float m_gForceVertical; // Vertical G-Force component
+        int16 m_gForceLateral; // Lateral G-Force component (quantised)
+        int16 m_gForceLongitudinal; // Longitudinal G-Force component (quantised)
+        int16 m_gForceVertical; // Vertical G-Force component (quantised)
         float m_yaw; // Yaw angle in radians
         float m_pitch; // Pitch angle in radians
         float m_roll; // Roll angle in radians
@@ -185,9 +189,10 @@ class CarMotionData(Packet):
         ("world_right_dir_x", ctypes.c_int16),  # World space right X direction (normalised)
         ("world_right_dir_y", ctypes.c_int16),  # World space right Y direction (normalised)
         ("world_right_dir_z", ctypes.c_int16),  # World space right Z direction (normalised)
-        ("g_force_lateral", ctypes.c_float),  # Lateral G-Force component
-        ("g_force_longitudinal", ctypes.c_float),  # Longitudinal G-Force component
-        ("g_force_vertical", ctypes.c_float),  # Vertical G-Force component
+        # G-forces are quantised int16 in 2026: real value = field / 1000.0
+        ("g_force_lateral", ctypes.c_int16),  # Lateral G-Force component (quantised)
+        ("g_force_longitudinal", ctypes.c_int16),  # Longitudinal G-Force component (quantised)
+        ("g_force_vertical", ctypes.c_int16),  # Vertical G-Force component (quantised)
         ("yaw", ctypes.c_float),  # Yaw angle in radians
         ("pitch", ctypes.c_float),  # Pitch angle in radians
         ("roll", ctypes.c_float),  # Roll angle in radians
@@ -205,7 +210,7 @@ class PacketMotionData(Packet):
 
     _fields_ = [
         ("header", PacketHeader),  # Header
-        ("car_motion_data", CarMotionData * 22),  # Data for all cars on track
+        ("car_motion_data", CarMotionData * MAX_CARS),  # Data for all cars on track
     ]
 
 
@@ -224,6 +229,36 @@ class MarshalZone(Packet):
             "zone_flag",
             ctypes.c_int8,
         ),  # -1 = invalid/unknown, 0 = none, 1 = green, 2 = blue, 3 = yellow, 4 = red
+    ]
+
+
+class ActiveAeroZone(Packet):
+    """
+    struct ActiveAeroZone
+    {
+        float m_zoneStart; // Fraction (0..1) of way through the lap the Active Aero zone starts
+        float m_zoneEnd;   // Fraction (0..1) of way through the lap the Active Aero zone ends
+    };
+    """
+
+    _fields_ = [
+        ("zone_start", ctypes.c_float),  # Fraction (0..1) through the lap the Active Aero zone starts
+        ("zone_end", ctypes.c_float),  # Fraction (0..1) through the lap the Active Aero zone ends
+    ]
+
+
+class DRSZone(Packet):
+    """
+    struct DRSZone
+    {
+        float m_zoneStart; // Fraction (0..1) of way through the lap the DRS zone starts
+        float m_zoneEnd;   // Fraction (0..1) of way through the lap the DRS zone ends
+    };
+    """
+
+    _fields_ = [
+        ("zone_start", ctypes.c_float),  # Fraction (0..1) through the lap the DRS zone starts
+        ("zone_end", ctypes.c_float),  # Fraction (0..1) through the lap the DRS zone ends
     ]
 
 
@@ -294,7 +329,7 @@ class PacketSessionData(Packet):
         // 2 = virtual, 3 = formation lap
         uint8 m_networkGame; // 0 = offline, 1 = online
         uint8 m_numWeatherForecastSamples; // Number of weather samples to follow
-        WeatherForecastSample m_weatherForecastSamples[56]; // Array of weather forecast samples
+        WeatherForecastSample m_weatherForecastSamples[64]; // Array of weather forecast samples
         uint8 m_forecastAccuracy; // 0 = Perfect, 1 = Approximate
         uint8 m_aiDifficulty; // AI Difficulty rating – 0-110
         uint32 m_seasonLinkIdentifier; // Identifier for season - persists across saves
@@ -354,6 +389,21 @@ class PacketSessionData(Packet):
                                                     // structure - see appendix for types
         float    m_sector2LapDistanceStart;          // Distance in m around track where sector 2 starts
         float    m_sector3LapDistanceStart;          // Distance in m around track where sector 3 starts
+
+        // Aero and DRS zones (2026 Season Pack)
+        uint8    m_activeAeroTrackStatus;            // 0 = Full, 1 = Partial
+        uint8    m_numActiveAeroZonesFull;           // Number of Active Aero zones to follow
+        ActiveAeroZone  m_activeAeroZonesFull[8];    // List of Active Aero zones - max 8
+        uint8    m_numActiveAeroZonesPartial;        // Number of Active Aero zones to follow
+        ActiveAeroZone  m_activeAeroZonesPartial[8]; // List of Active Aero zones - max 8
+        uint8    m_numDRSZones;                      // Number of DRS zones to follow
+        DRSZone  m_drsZones[4];                      // List of DRS zones - max 4
+        float    m_startReactionTime;               // Driver start reaction time in seconds (0.0f if assisted)
+        uint8    m_antiLockBrakesAssist;             // 0 = Off, 1 = On
+        uint8    m_tractionControlAssist;            // 0 = Off, 1 = Medium, 2 = Full
+        uint8    m_dynamicRacingLineHiVis;           // 0 = Off, 1 = On
+        uint8    m_dynamicRacingLineColourBlind;     // 0 = Off, 1 = Protanopia, 2 = Deuteranopia, 3 = Tritanopia
+        uint8    m_recurringRewindPrompt;            // 0 = Off, 1 = On
     };
     """
 
@@ -372,8 +422,8 @@ class PacketSessionData(Packet):
         ("session_type", ctypes.c_uint8),
         ("track_id", ctypes.c_int8),  # -1 for unknown, see appendix
         # Formula, 0 = F1 Modern, 1 = F1 Classic, 2 = F2,
-        # 3 = F1 Generic, 4 = Beta, 5 = Supercars
-        # 6 = Esports, 7 = F2 2021
+        # 3 = F1 Generic, 4 = Beta, 6 = Esports,
+        # 8 = F1 World, 9 = F1 Elimination, 13 = F1 26
         ("formula", ctypes.c_uint8),
         ("session_time_left", ctypes.c_uint16),  # Time left in session in seconds
         ("session_duration", ctypes.c_uint16),  # Session duration in seconds
@@ -387,7 +437,7 @@ class PacketSessionData(Packet):
         ("safety_car_status", ctypes.c_uint8),  # 0 = no safety car, 1 = full, 2 = virtual, 3 = formation lap
         ("network_game", ctypes.c_uint8),  # 0 = offline, 1 = online
         ("num_weather_forecast_samples", ctypes.c_uint8),  # Number of weather samples to follow
-        ("weather_forecast_samples", WeatherForecastSample * 56),  # Array of weather forecast samples
+        ("weather_forecast_samples", WeatherForecastSample * 64),  # Array of weather forecast samples
         ("forecast_accuracy", ctypes.c_uint8),  # 0 = Perfect, 1 = Approximate
         ("ai_difficulty", ctypes.c_uint8),  # AI Difficulty rating – 0-110
         ("season_link_identifier", ctypes.c_uint32),  # Identifier for season - persists across saves
@@ -448,6 +498,20 @@ class PacketSessionData(Packet):
                                                     # 10 = R, 11 = R2, 12 = R3, 13 = Time Trial
         ("sector2_lap_distance_start", ctypes.c_float),# Distance in m around track where sector 2 starts
         ("sector3_lap_distance_start", ctypes.c_float),# Distance in m around track where sector 3 starts
+        # --- 2026 Season Pack additions (Aero and DRS zones + assists) ---
+        ("active_aero_track_status", ctypes.c_uint8),  # 0 = Full, 1 = Partial
+        ("num_active_aero_zones_full", ctypes.c_uint8),  # Number of Active Aero zones to follow
+        ("active_aero_zones_full", ActiveAeroZone * 8),  # List of Active Aero zones - max 8
+        ("num_active_aero_zones_partial", ctypes.c_uint8),  # Number of Active Aero zones to follow
+        ("active_aero_zones_partial", ActiveAeroZone * 8),  # List of Active Aero zones - max 8
+        ("num_drs_zones", ctypes.c_uint8),  # Number of DRS zones to follow
+        ("drs_zones", DRSZone * 4),  # List of DRS zones - max 4
+        ("start_reaction_time", ctypes.c_float),  # Driver start reaction time in seconds (0.0 if assisted)
+        ("anti_lock_brakes_assist", ctypes.c_uint8),  # 0 = Off, 1 = On
+        ("traction_control_assist", ctypes.c_uint8),  # 0 = Off, 1 = Medium, 2 = Full
+        ("dynamic_racing_line_hi_vis", ctypes.c_uint8),  # 0 = Off, 1 = On
+        ("dynamic_racing_line_colour_blind", ctypes.c_uint8),  # 0 = Off, 1 = Protanopia, 2 = Deuteranopia, 3 = Tritanopia
+        ("recurring_rewind_prompt", ctypes.c_uint8),  # 0 = Off, 1 = On
     ]
 
 
@@ -557,7 +621,7 @@ class PacketLapData(Packet):
 
     _fields_ = [
         ("header", PacketHeader),  # Header
-        ("lap_data", LapData * 22),  # Lap data for all cars on track
+        ("lap_data", LapData * MAX_CARS),  # Lap data for all cars on track
         ("time_trial_pb_car_idx", ctypes.c_uint8),  # Index of Personal Best car in time trial (255 if invalid)
         ("time_trial_rival_car_idx", ctypes.c_uint8),  # Index of Rival car in time trial (255 if invalid)
     ]
@@ -679,7 +743,8 @@ class SafetyCar(Packet):
 class Collision(Packet):
     _fields_ = [
         ("vehicle1_idx", ctypes.c_uint8),
-        ("vehicle2_idx", ctypes.c_uint8)
+        ("vehicle2_idx", ctypes.c_uint8),
+        ("severity", ctypes.c_uint8),  # 0 = low, 1 = medium, 2 = high (2026)
     ]
 
 
@@ -756,9 +821,9 @@ class ParticipantData(Packet):
     struct ParticipantData
     {
         uint8 m_aiControlled;            // Whether the vehicle is AI (1) or Human (0) controlled
-        uint8 m_driverId;                // Driver id - see appendix, 255 if network human
-        uint8 m_networkId;               // Network id – unique identifier for network players
-        uint8 m_teamId;                  // Team id - see appendix
+        uint16 m_driverId;               // Driver id - see appendix, 65535 if network human
+        uint16 m_networkId;              // Network id – unique identifier for network players
+        uint16 m_teamId;                 // Team id - see appendix
         uint8 m_myTeam;                  // My team flag – 1 = My Team, 0 = otherwise
         uint8 m_raceNumber;              // Race number of the car
         uint8 m_nationality;             // Nationality of the driver
@@ -774,9 +839,9 @@ class ParticipantData(Packet):
 
     _fields_ = [
         ("ai_controlled", ctypes.c_uint8),        # Whether the vehicle is AI (1) or Human (0) controlled
-        ("driver_id", ctypes.c_uint8),            # Driver id - see appendix, 255 if network human
-        ("network_id", ctypes.c_uint8),           # Network id – unique identifier for network players
-        ("team_id", ctypes.c_uint8),              # Team id - see appendix
+        ("driver_id", ctypes.c_uint16),           # Driver id - see appendix, 65535 if network human
+        ("network_id", ctypes.c_uint16),          # Network id – unique identifier for network players
+        ("team_id", ctypes.c_uint16),             # Team id - see appendix (2026: IDs can exceed 255)
         ("my_team", ctypes.c_uint8),              # My team flag – 1 = My Team, 0 = otherwise
         ("race_number", ctypes.c_uint8),          # Race number of the car
         ("nationality", ctypes.c_uint8),          # Nationality of the driver
@@ -804,7 +869,7 @@ class PacketParticipantsData(Packet):
     _fields_ = [
         ("header", PacketHeader),  # Header
         ("num_active_cars", ctypes.c_uint8),  # Number of active cars in the data – should match number of cars on HUD
-        ("participants", ParticipantData * 22),
+        ("participants", ParticipantData * MAX_CARS),
     ]
 
 
@@ -876,7 +941,7 @@ class PacketCarSetupData(Packet):
 
     _fields_ = [
         ("header", PacketHeader),  # Header
-        ("car_setups", CarSetupData * 22),
+        ("car_setups", CarSetupData * MAX_CARS),
         ('next_front_wing_value', ctypes.c_float) # Value of front wing after next pit stop - player only
     ]
 
@@ -898,7 +963,7 @@ class CarTelemetryData(Packet):
         uint16 m_brakesTemperature[4]; // Brakes temperature (celsius)
         uint8 m_tyresSurfaceTemperature[4]; // Tyres surface temperature (celsius)
         uint8 m_tyresInnerTemperature[4]; // Tyres inner temperature (celsius)
-        uint16 m_engineTemperature; // Engine temperature (celsius)
+        uint8 m_engineTemperature; // Engine temperature (celsius)
         float m_tyresPressure[4]; // Tyres pressure (PSI)
         uint8 m_surfaceType[4]; // Driving surface, see appendices
     };
@@ -918,7 +983,7 @@ class CarTelemetryData(Packet):
         ("brakes_temperature", ctypes.c_uint16 * 4),  # Brakes temperature (celsius)
         ("tyres_surface_temperature", ctypes.c_uint8 * 4),  # Tyres surface temperature (celsius)
         ("tyres_inner_temperature", ctypes.c_uint8 * 4),  # Tyres inner temperature (celsius)
-        ("engine_temperature", ctypes.c_uint16),  # Engine temperature (celsius)
+        ("engine_temperature", ctypes.c_uint8),  # Engine temperature (celsius) - uint8 since 2026
         ("tyres_pressure", ctypes.c_float * 4),  # Tyres pressure (PSI)
         ("surface_type", ctypes.c_uint8 * 4),  # Driving surface, see appendices
     ]
@@ -927,7 +992,7 @@ class CarTelemetryData(Packet):
 class PacketCarTelemetryData(Packet):
     _fields_ = [
         ("header", PacketHeader),  # Header
-        ("car_telemetry_data", CarTelemetryData * 22),
+        ("car_telemetry_data", CarTelemetryData * MAX_CARS),
         ("mfd_panel_index", ctypes.c_uint8),  # Index of MFD panel open - 255 = MFD closed
         # Single player, race – 0 = Car setup, 1 = Pits
         # 2 = Damage, 3 =  Engine, 4 = Temperatures
@@ -972,9 +1037,10 @@ class CarStatusData(Packet):
         float m_enginePowerMGUK; // Engine power output of MGU-K (W)
         float m_ersStoreEnergy; // ERS energy store in Joules
         uint8 m_ersDeployMode; // ERS deployment mode, 0 = none, 1 = medium
-        // 2 = hotlap, 3 = overtake
+        // 2 = hotlap, 3 = boost
         float m_ersHarvestedThisLapMGUK; // ERS energy harvested this lap by MGU-K
         float m_ersHarvestedThisLapMGUH; // ERS energy harvested this lap by MGU-H
+        float m_ersHarvestedLimitPerLap; // ERS energy harvest limit for this lap
         float m_ersDeployedThisLap; // ERS energy deployed this lap
         uint8 m_networkPaused; // Whether the car is paused in a network game
     };
@@ -1010,9 +1076,10 @@ class CarStatusData(Packet):
         ("engine_power_ice", ctypes.c_float),  # Engine power output of ICE (W)
         ("engine_power_mguk", ctypes.c_float),  # Engine power output of MGU-K (W)
         ("ers_store_energy", ctypes.c_float),  # ERS energy store in Joules
-        ("ers_deploy_mode", ctypes.c_uint8),  # ERS deployment mode, 0 = none, 1 = medium 2 = hotlap, 3 = overtake
+        ("ers_deploy_mode", ctypes.c_uint8),  # ERS deployment mode, 0 = none, 1 = medium, 2 = hotlap, 3 = boost
         ("ers_harvested_this_lap_mguk", ctypes.c_float),  # ERS energy harvested this lap by MGU-K
         ("ers_harvested_this_lap_mguh", ctypes.c_float),  # ERS energy harvested this lap by MGU-H
+        ("ers_harvested_limit_per_lap", ctypes.c_float),  # ERS energy harvest limit for this lap (2026)
         ("ers_deployed_this_lap", ctypes.c_float),  # ERS energy deployed this lap
         (
             "network_paused",
@@ -1032,7 +1099,7 @@ class PacketCarStatusData(Packet):
 
     _fields_ = [
         ("header", PacketHeader),  # Header
-        ("car_status_data", CarStatusData * 22),
+        ("car_status_data", CarStatusData * MAX_CARS),
     ]
 
 
@@ -1064,14 +1131,14 @@ class PacketFinalClassificationData(Packet):
     _fields_ = [
         ("header", PacketHeader),  # Header
         ("num_cars", ctypes.c_uint8),  # Number of cars in the final classification
-        ("classification_data", FinalClassificationData * 22),
+        ("classification_data", FinalClassificationData * MAX_CARS),
     ]
 
 
 class LobbyInfoData(Packet):
     _fields_ = [
         ("ai_controlled", ctypes.c_uint8),  # Whether the vehicle is AI (1) or Human (0) controlled
-        ("team_id", ctypes.c_uint8),  # Team id - see appendix (255 if no team currently selected)
+        ("team_id", ctypes.c_uint16),  # Team id - see appendix (65535 if no team currently selected)
         ("nationality", ctypes.c_uint8),  # Nationality of the driver
         ("platform", ctypes.c_uint8),  # 1 = Steam, 3 = PlayStation, 4 = Xbox, 6 = Origin, 255 = unknown
         ("name", ctypes.c_char * 32),  # Name of participant in UTF-8 format – null terminated
@@ -1089,7 +1156,7 @@ class PacketLobbyInfoData(Packet):
         ("header", PacketHeader),  # Header
         # Packet specific data
         ("num_players", ctypes.c_uint8),  # Number of players in the lobby data
-        ("lobby_players", LobbyInfoData * 22),
+        ("lobby_players", LobbyInfoData * MAX_CARS),
     ]
 
 
@@ -1156,7 +1223,7 @@ class CarDamageData(Packet):
 class PacketCarDamageData(Packet):
     _fields_ = [
         ("header", PacketHeader),  # Header
-        ("car_damage_data", CarDamageData * 22),
+        ("car_damage_data", CarDamageData * MAX_CARS),
     ]
 
 
@@ -1192,7 +1259,7 @@ class LapHistoryData(Packet):
         ("sector2_time_in_ms", ctypes.c_uint16),  # Sector 2 time in milliseconds
         ("sector2_time_minutes", ctypes.c_uint8),  # Sector 2 whole minute part
         ("sector3_time_in_ms", ctypes.c_uint16),  # Sector 3 time in milliseconds
-        ("sector1_time_minutes", ctypes.c_uint8),  # Sector 3 whole minute part
+        ("sector3_time_minutes", ctypes.c_uint8),  # Sector 3 whole minute part
         ("lap_valid_bit_flags", ctypes.c_uint8),  # 0x01 bit set-lap valid, 0x02 bit set-sector 1 valid
         # 0x04 bit set-sector 2 valid, 0x08 bit set-sector 3 valid
     ]
@@ -1251,7 +1318,7 @@ class TyreSetData(Packet):
         ("recommended_session", ctypes.c_uint8),  # Recommended session for tyre set
         ("life_span", ctypes.c_uint8),  # Laps left in this tyre set
         ("usable_life", ctypes.c_uint8),  # Max number of laps recommended for this compound
-        ("lap_delta_time", ctypes.c_uint16),  # Lap delta time in milliseconds compared to fitted set
+        ("lap_delta_time", ctypes.c_int16),  # Lap delta time in milliseconds compared to fitted set
         ("fitted", ctypes.c_uint8),  # Whether the set is fitted or not
     ]
 
@@ -1350,19 +1417,19 @@ class TimeTrialDataSet(Packet):
     """
     The time trial data gives extra information only relevant to time trial game mode. This packet will not be sent in other game modes. 
     Frequency: 1 per second
-    Size: 101 bytes
+    Size: 104 bytes
     Version: 1
     struct TimeTrialDataSet
     {
         uint8   m_carIdx;              // Index of the car this data relates to
-        uint8   m_teamId;              // Team id - see appendix
+        uint16  m_teamId;             // Team id - see appendix
         uint32  m_lapTimeInMS;         // Lap time in milliseconds
         uint32  m_sector1TimeInMS;     // Sector 1 time in milliseconds
         uint32  m_sector2TimeInMS;     // Sector 2 time in milliseconds
         uint32  m_sector3TimeInMS;     // Sector 3 time in milliseconds
-        uint8   m_tractionControl;     // 0 = off, 1 = medium, 2 = full
-        uint8   m_gearboxAssist;       // 1 = manual, 2 = manual & suggested gear, 3 = auto
-        uint8   m_antiLockBrakes;      // 0 (off) - 1 (on)
+        uint8   m_tractionControl;     // 0 = assist off, 1 = assist on
+        uint8   m_gearboxAssist;       // 0 = assist off, 1 = assist on
+        uint8   m_antiLockBrakes;      // 0 = assist off, 1 = assist on
         uint8   m_equalCarPerformance; // 0 = Realistic, 1 = Equal
         uint8   m_customSetup;         // 0 = No, 1 = Yes
         uint8   m_valid;               // 0 = invalid, 1 = valid
@@ -1370,14 +1437,14 @@ class TimeTrialDataSet(Packet):
     """
     _fields_ = [
         ('car_idx', ctypes.c_uint8),               # Index of the car this data relates to
-        ('team_id', ctypes.c_uint8),               # Team id - see appendix
+        ('team_id', ctypes.c_uint16),              # Team id - see appendix
         ('lap_time_in_ms', ctypes.c_uint32),       # Lap time in milliseconds
         ('sector1_time_in_ms', ctypes.c_uint32),   # Sector 1 time in milliseconds
         ('sector2_time_in_ms', ctypes.c_uint32),   # Sector 2 time in milliseconds
         ('sector3_time_in_ms', ctypes.c_uint32),   # Sector 3 time in milliseconds
-        ('traction_control', ctypes.c_uint8),      # 0 = off, 1 = medium, 2 = full
-        ('gearbox_assist', ctypes.c_uint8),        # 1 = manual, 2 = manual & suggested gear, 3 = auto
-        ('anti_lock_brakes', ctypes.c_uint8),      # 0 (off) - 1 (on)
+        ('traction_control', ctypes.c_uint8),      # 0 = assist off, 1 = assist on
+        ('gearbox_assist', ctypes.c_uint8),        # 0 = assist off, 1 = assist on
+        ('anti_lock_brakes', ctypes.c_uint8),      # 0 = assist off, 1 = assist on
         ('equal_car_performance', ctypes.c_uint8), # 0 = Realistic, 1 = Equal
         ('custom_setup', ctypes.c_uint8),          # 0 = No, 1 = Yes
         ('valid', ctypes.c_uint8),                 # 0 = invalid, 1 = valid
@@ -1403,7 +1470,7 @@ class PacketTimeTrialData(Packet):
 
 
 cs_maxNumLapsInLapPositionsHistoryPacket = 50
-cs_maxNumCarsInUDPData = 22
+cs_maxNumCarsInUDPData = 24
 class PacketLapPositionsData(Packet):
     """
     struct PacketLapPositionsData
@@ -1427,21 +1494,64 @@ class PacketLapPositionsData(Packet):
 
     ]
 
+class CarTelemetry2Data(Packet):
+    """
+    struct CarTelemetry2Data
+    {
+        uint8   m_activeAeroMode;               // 0 = Corner mode, 1 = Straight mode
+        uint8   m_activeAeroAvailable;          // 0 = not available, 1 = available
+        uint16  m_activeAeroActivationDistance; // 0 = not available, non-zero = available in [X] metres
+        uint8   m_overtakeAvailable;            // 0 = not available, 1 = available
+        uint8   m_overtakeActive;              // 0 = not active, 1 = active
+        uint16  m_overtakeActivationDistance;   // 0 = not available, non-zero = available in [X] metres
+        uint8   m_2026Regulations;             // 0 = pre-2026, 1 = 2026 regulations applicable
+        uint8   m_drivingWrongWay;             // Whether the car is driving the wrong way
+    };
+    """
+
+    _fields_ = [
+        ("active_aero_mode", ctypes.c_uint8),  # 0 = Corner mode, 1 = Straight mode
+        ("active_aero_available", ctypes.c_uint8),  # 0 = not available, 1 = available
+        ("active_aero_activation_distance", ctypes.c_uint16),  # metres until Active Aero available
+        ("overtake_available", ctypes.c_uint8),  # 0 = not available, 1 = available
+        ("overtake_active", ctypes.c_uint8),  # 0 = not active, 1 = active
+        ("overtake_activation_distance", ctypes.c_uint16),  # metres until Overtake Mode available
+        ("regulations_2026", ctypes.c_uint8),  # 0 = pre-2026, 1 = 2026 regulations applicable
+        ("driving_wrong_way", ctypes.c_uint8),  # Whether the car is driving the wrong way
+    ]
+
+
+class PacketCarTelemetry2Data(Packet):
+    """
+    struct PacketCarTelemetry2Data
+    {
+        PacketHeader       m_header;                // Header
+        CarTelemetry2Data  m_carTelemetry2Data[24];
+    };
+    """
+
+    _fields_ = [
+        ("header", PacketHeader),  # Header
+        ("car_telemetry2_data", CarTelemetry2Data * MAX_CARS),
+    ]
+
+
 HEADER_FIELD_TO_PACKET_TYPE = {
-    (2025, 1, 0): PacketMotionData,
-    (2025, 1, 1): PacketSessionData,
-    (2025, 1, 2): PacketLapData,
-    (2025, 1, 3): PacketEventData,
-    (2025, 1, 4): PacketParticipantsData,
-    (2025, 1, 5): PacketCarSetupData,
-    (2025, 1, 6): PacketCarTelemetryData,
-    (2025, 1, 7): PacketCarStatusData,
-    (2025, 1, 8): PacketFinalClassificationData,
-    (2025, 1, 9): PacketLobbyInfoData,
-    (2025, 1, 10): PacketCarDamageData,
-    (2025, 1, 11): PacketSessionHistoryData,
-    (2025, 1, 12): PacketTyreSetsData,
-    (2025, 1, 13): PacketMotionExData,
-    (2025, 1, 14): PacketTimeTrialData,
-    (2025, 1, 15): PacketLapPositionsData,
+    (2026, 1, 0): PacketMotionData,
+    (2026, 1, 1): PacketSessionData,
+    (2026, 1, 2): PacketLapData,
+    (2026, 1, 3): PacketEventData,
+    (2026, 1, 4): PacketParticipantsData,
+    (2026, 1, 5): PacketCarSetupData,
+    (2026, 1, 6): PacketCarTelemetryData,
+    (2026, 1, 7): PacketCarStatusData,
+    (2026, 1, 8): PacketFinalClassificationData,
+    (2026, 1, 9): PacketLobbyInfoData,
+    (2026, 1, 10): PacketCarDamageData,
+    (2026, 1, 11): PacketSessionHistoryData,
+    (2026, 1, 12): PacketTyreSetsData,
+    (2026, 1, 13): PacketMotionExData,
+    (2026, 1, 14): PacketTimeTrialData,
+    (2026, 1, 15): PacketLapPositionsData,
+    (2026, 1, 16): PacketCarTelemetry2Data,
 }
